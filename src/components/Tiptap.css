@@ -1,0 +1,9 @@
+.ProseMirror{
+  min-height: 100px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.ProseMirror-focused{
+  outline: none;
+}
