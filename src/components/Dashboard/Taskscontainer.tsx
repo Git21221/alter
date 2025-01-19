@@ -46,7 +46,6 @@ import { format } from "date-fns";
 import { FaChevronDown } from "react-icons/fa";
 import { PiListBold } from "react-icons/pi";
 import { FiEdit3 } from "react-icons/fi";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 const optionsCategory = [
   {
