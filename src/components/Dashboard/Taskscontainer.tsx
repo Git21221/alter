@@ -261,14 +261,12 @@ export function SingleTask({
   setTaskData,
   taskData,
   name,
-  provided,
 }: {
   task: Task;
   index: number;
   setTaskData: (data: Task) => void;
   taskData: Task;
   name: string;
-  provided: any;
 }) {
   const dispatch = useDispatch();
   const { checkedTask } = useSelector((state: RootState) => state.Task);
@@ -280,9 +278,6 @@ export function SingleTask({
   };
   return (
     <div
-      ref={provided.innerRef}
-      {...provided.draggableProps}
-      {...provided.dragHandleProps}
       key={index}
       className="select-none py-2 px-2 flex w-full items-center text-md border-t font-medium"
     >
@@ -418,11 +413,7 @@ export function TaskCategories({
     setOpenAccordion((prev) => !prev);
   };
   return (
-    <Droppable droppableId={name}>
-      {(provided) => (
         <div
-          ref={provided.innerRef}
-          {...provided.droppableProps}
           className="taskCategory"
           key={categoryKey}
         >
@@ -603,22 +594,13 @@ export function TaskCategories({
               {/* list of all tasks */}
               {tasks.length > 0 ? (
                 tasks.map((task, index) => (
-                  <Draggable
-                    key={task.id}
-                    draggableId={task.id.toString()}
-                    index={index}
-                  >
-                    {(provided) => (
                       <SingleTask
-                        provided={provided}
                         task={task}
                         index={index}
                         setTaskData={setTaskData}
                         taskData={taskData}
                         name={name}
                       />
-                    )}
-                  </Draggable>
                 ))
               ) : (
                 <p className="text-gray-400 text-center flex h-60 items-center justify-center">
@@ -627,10 +609,7 @@ export function TaskCategories({
               )}
             </div>
           )}
-          {provided.placeholder}
         </div>
-      )}
-    </Droppable>
   );
 }
 
@@ -739,51 +718,6 @@ export function TasksContainer({
   const { isList, isBoard } = useSelector(
     (state: RootState) => state.ListBoardView
   );
-  const onDragEnd = (result: any) => {
-    const { destination, source, draggableId } = result;
-
-    //if dropped outside the droppable area
-    if (!destination) return;
-
-    //if dropped in the same position
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    )
-      return;
-
-    const startColumn = tasks.find((task) => task.name === source.droppableId);
-    const endColumn = tasks.find(
-      (task) => task.name === destination.droppableId
-    );
-
-    // Remove the dragged task from the start column
-    const startTasks = Array.from(startColumn?.tasks || []);
-    const [removedTask] = startTasks.splice(source.index, 1);
-
-    //add the dragged task to the end column
-    const endTasks = Array.from(endColumn?.tasks || []);
-    endTasks.splice(destination.index, 0, removedTask);
-
-    const updatedTasks = tasks.map((task) => {
-      if (task.name === source.droppableId) {
-        return {
-          ...task,
-          tasks: startTasks,
-        };
-      }
-
-      if (task.name === destination.droppableId) {
-        return {
-          ...task,
-          tasks: endTasks,
-        };
-      }
-
-      return task;
-    });
-    setTaskData(updatedTasks);
-  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -791,7 +725,6 @@ export function TasksContainer({
       <TopSecondRow />
       <TopThirdRow />
       {isList && <TableHeadings />}
-      <DragDropContext onDragEnd={onDragEnd}>
         {isList &&
           !isFiltering &&
           tasks.map((data, index) => (
@@ -805,7 +738,6 @@ export function TasksContainer({
               tasks={data.tasks}
             />
           ))}
-      </DragDropContext>
       {isList &&
         isFiltering &&
         filteredTasks.map((data, index) => (
