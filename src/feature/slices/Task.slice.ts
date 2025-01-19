@@ -177,20 +177,21 @@ const TaskSlice = createSlice({
     },
 
     filterTasks: (state, action) => {
-      const {category, dueDate, searchQuery} = action.payload;
+      const { category, dueDate, searchQuery } = action.payload;
       console.log(category, dueDate, searchQuery);
+    
       state.filteredTasks = state.tasks.map((group) => {
         return {
           ...group,
           tasks: group.tasks.filter((task) => {
-            const hasCategory = category ? task.category !== "" && task.category.name === category.name : true;
+            const hasCategory = category.name ? task.category && task.category.name === category.name : true;
             const hasDueDate = dueDate ? task.dueOn === dueDate : true;
             const hasSearchText = searchQuery ? task.title.toLowerCase().includes(searchQuery.toLowerCase()) : true;
             return hasCategory && hasDueDate && hasSearchText;
           }),
         };
-      })
-    }
+      });
+    }    
   },
 })
 

@@ -164,6 +164,7 @@ export function TopThirdRow() {
 
   const [filters, setFilters] = useState(defaultFilters);
 
+  // Check if any filter is active and dispatch the setFiltering state accordingly
   const checkIsFiltering = (updatedFilters: typeof filters) => {
     const isFiltering = !(
       updatedFilters.category.id === defaultFilters.category.id &&
@@ -173,13 +174,13 @@ export function TopThirdRow() {
       updatedFilters.searchQuery.trim() === defaultFilters.searchQuery.trim()
     );
 
-    // Dispatch setFiltering based on the comparison
-    dispatch(setFiltering(isFiltering));
+    dispatch(setFiltering(isFiltering)); // Dispatch whether filters are active
   };
 
+  // Handle Category Filter Change
   const getValue = (value: string) => {
     const updatedCategory = {
-      id: value === "work" ? 1 : 2,
+      id: value === "work" ? 1 : 2,  // Example: work => 1, else 2
       name: value,
       title: value,
     };
@@ -188,22 +189,25 @@ export function TopThirdRow() {
 
     setFilters(updatedFilters);
     checkIsFiltering(updatedFilters);
-
-    dispatch(filterTasks(updatedFilters));
+    console.log("updated filter", updatedFilters);
+    
+    dispatch(filterTasks(updatedFilters)); // Dispatch filtered tasks
   };
 
+  // Handle Due Date Filter Change
   const handleDateChange = (date: any) => {
     const updatedFilters = {
       ...filters,
-      dueDate: format(date, "dd MMM, yyyy"),
+      dueDate: format(date, "dd MMM, yyyy"),  // Format date as "dd MMM, yyyy"
     };
 
     setFilters(updatedFilters);
     checkIsFiltering(updatedFilters);
-
-    dispatch(filterTasks(updatedFilters));
+    console.log(updatedFilters);
+    dispatch(filterTasks(updatedFilters)); // Dispatch filtered tasks
   };
 
+  // Handle Search Query Filter Change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     const updatedFilters = { ...filters, searchQuery: query };
@@ -211,12 +215,14 @@ export function TopThirdRow() {
     setFilters(updatedFilters);
     checkIsFiltering(updatedFilters);
 
-    dispatch(filterTasks(updatedFilters));
+    dispatch(filterTasks(updatedFilters)); // Dispatch filtered tasks
   };
 
+  // Open Task Modal
   const handleAddTaskModal = () => {
     dispatch(openModal());
   };
+
   return (
     <div className="flex items-center justify-between">
       <div className="left flex items-center gap-4">
@@ -224,8 +230,8 @@ export function TopThirdRow() {
         <div className="w-32">
           <Select
             label="category"
-            items={optionsCategory}
-            onChange={getValue}
+            items={optionsCategory}  // Ensure optionsCategory is defined somewhere
+            onChange={getValue}  // Pass category value to getValue function
           />
         </div>
         <div className="w-32">
