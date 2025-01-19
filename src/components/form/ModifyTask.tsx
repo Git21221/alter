@@ -60,6 +60,7 @@ export function ModifyTask({
   console.log(editTask);
 
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  console.log(uploadedFiles);
   const [preview, setPreview] = useState<string[]>([]);
   useEffect(() => {
     const newPreview = editTask.attachment.map((file: File) =>
