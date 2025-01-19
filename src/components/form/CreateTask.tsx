@@ -58,6 +58,7 @@ export function CreateTask({
   setTaskData: (data: any) => void;
 }) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  console.log(uploadedFiles);
   const [preview, setPreview] = useState<string[]>([]);
   const getValue = (value: string) => {
     setTaskData({
