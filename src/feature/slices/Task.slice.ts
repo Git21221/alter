@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { TaskCategory, taskStatus, TaskStatus } from "../../constant/taskType";
+import { compareAsc, compareDesc } from "date-fns";
 
 export interface Task {
   id: number,
@@ -20,6 +21,10 @@ export interface Tasks {
   isFiltering: boolean,
   filteredTasks: TaskStatus[],
   checkedTask: CheckedTask[],
+  descSort: TaskStatus[],
+  ascSort: TaskStatus[],
+  isAscSort: boolean,
+  isDescSort: boolean,
 }
 
 const initialState: Tasks = {
@@ -27,12 +32,17 @@ const initialState: Tasks = {
   isFiltering: false,
   filteredTasks: taskStatus,
   checkedTask: [],
+  ascSort: [],
+  descSort: [],
+  isAscSort: false,
+  isDescSort: false,
 }
 
 const TaskSlice = createSlice({
   name: "Task",
   initialState,
   reducers: {
+
     addTask: (state, action) => {
       let status = action.payload.task.status.name; //status of the task from the payload
       let idx = state.tasks.findIndex((obj) => obj.name.toLowerCase() === status); //find the index of the task
@@ -179,7 +189,7 @@ const TaskSlice = createSlice({
     filterTasks: (state, action) => {
       const { category, dueDate, searchQuery } = action.payload;
       console.log(category, dueDate, searchQuery);
-    
+
       state.filteredTasks = state.tasks.map((group) => {
         return {
           ...group,
@@ -191,9 +201,34 @@ const TaskSlice = createSlice({
           }),
         };
       });
-    }    
+    },
+
+    sortTasksByDateAsc: (state, action) => {
+      state.isAscSort = action.payload;
+      state.isDescSort = false;
+      state.ascSort = state.tasks.slice();
+      state.ascSort.forEach((group) => {
+        group.tasks = group.tasks.sort((a, b) => compareAsc(new Date(a.dueOn as string), new Date(b.dueOn as string)))
+      }
+      )
+    },
+
+    sortTasksByDateDesc: (state, action) => {
+      state.isDescSort = action.payload;
+      state.isAscSort = false;
+      state.descSort = state.tasks.slice();
+      state.descSort.forEach((group) => {
+        group.tasks = group.tasks.sort((a, b) => compareDesc(new Date(a.dueOn as string), new Date(b.dueOn as string)))
+      });
+    },
+
+    setNomalTask: (state) => {
+      console.log("bal");
+      
+      state.isDescSort = false;
+    }
   },
 })
 
 export default TaskSlice;
-export const { addTask, editWholeTask, updateTaskStatus, deleteTask, deleteAllTaskByCheckList, setCheckedTask, removeCheckedTask, removeAllCheckedTask, updateStatusOfAllTasks, setFiltering, filterTasks } = TaskSlice.actions;
+export const { addTask, editWholeTask, updateTaskStatus, deleteTask, deleteAllTaskByCheckList, setCheckedTask, removeCheckedTask, removeAllCheckedTask, updateStatusOfAllTasks, setFiltering, filterTasks, sortTasksByDateAsc, sortTasksByDateDesc, setNomalTask } = TaskSlice.actions;

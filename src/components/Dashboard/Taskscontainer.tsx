@@ -25,6 +25,9 @@ import {
   removeCheckedTask,
   setCheckedTask,
   setFiltering,
+  setNomalTask,
+  sortTasksByDateAsc,
+  sortTasksByDateDesc,
   Task,
   updateTaskStatus,
 } from "../../feature/slices/Task.slice";
@@ -35,12 +38,13 @@ import {
   RiCheckboxCircleFill,
   RiDeleteBin6Line,
   RiDraggable,
+  RiExpandUpDownFill,
 } from "react-icons/ri";
 import { TfiMoreAlt } from "react-icons/tfi";
 import { HiPlus } from "react-icons/hi";
 import { IoAddOutline, IoReturnDownBack } from "react-icons/io5";
 import { Dropdown } from "../Dropdown";
-import { MdDateRange, MdOutlineViewKanban } from "react-icons/md";
+import { MdArrowDropDown, MdArrowDropUp, MdDateRange, MdOutlineViewKanban } from "react-icons/md";
 import { Dayjs } from "dayjs";
 import { format } from "date-fns";
 import { FaChevronDown } from "react-icons/fa";
@@ -180,7 +184,7 @@ export function TopThirdRow() {
   // Handle Category Filter Change
   const getValue = (value: string) => {
     const updatedCategory = {
-      id: value === "work" ? 1 : 2,  // Example: work => 1, else 2
+      id: value === "work" ? 1 : 2, // Example: work => 1, else 2
       name: value,
       title: value,
     };
@@ -190,7 +194,7 @@ export function TopThirdRow() {
     setFilters(updatedFilters);
     checkIsFiltering(updatedFilters);
     console.log("updated filter", updatedFilters);
-    
+
     dispatch(filterTasks(updatedFilters)); // Dispatch filtered tasks
   };
 
@@ -198,7 +202,7 @@ export function TopThirdRow() {
   const handleDateChange = (date: any) => {
     const updatedFilters = {
       ...filters,
-      dueDate: format(date, "dd MMM, yyyy"),  // Format date as "dd MMM, yyyy"
+      dueDate: format(date, "dd MMM, yyyy"), // Format date as "dd MMM, yyyy"
     };
 
     setFilters(updatedFilters);
@@ -230,8 +234,8 @@ export function TopThirdRow() {
         <div className="w-32">
           <Select
             label="category"
-            items={optionsCategory}  // Ensure optionsCategory is defined somewhere
-            onChange={getValue}  // Pass category value to getValue function
+            items={optionsCategory} // Ensure optionsCategory is defined somewhere
+            onChange={getValue} // Pass category value to getValue function
           />
         </div>
         <div className="w-32">
@@ -249,10 +253,24 @@ export function TopThirdRow() {
 }
 
 export function TableHeadings() {
+  const dispatch = useDispatch();
+  const { isAscSort, isDescSort } = useSelector(
+    (state: RootState) => state.Task
+  );
+
+  const handleDateSort = () => {
+    console.log(isAscSort, isDescSort);
+    
+    if (!isDescSort && !isAscSort) dispatch(sortTasksByDateAsc(true)); //if normal
+    else if (isAscSort) dispatch(sortTasksByDateDesc(true)); //already asc
+    else dispatch(setNomalTask()); //if desc
+  };
   return (
     <div className="tableHeadings flex gap-3 w-full border-t p-2 text-[var(--search-icon-color)]">
       <p className="text-sm font-semibold flex-1">Task Name</p>
-      <p className="text-sm font-semibold flex-1">Due on</p>
+      <p className="text-sm font-semibold flex-1 flex items-center gap-2 cursor-default" onClick={handleDateSort}>
+        Due on {isAscSort ? <MdArrowDropUp /> : isDescSort ? <MdArrowDropDown /> : <RiExpandUpDownFill />}
+      </p>
       <p className="text-sm font-semibold flex-1">Task Status</p>
       <p className="text-sm font-semibold flex-1">Task Category</p>
       <p className="text-sm font-semibold flex-[0.15]"></p>
@@ -418,203 +436,200 @@ export function TaskCategories({
     setOpenAccordion((prev) => !prev);
   };
   return (
+    <div className="taskCategory" key={categoryKey}>
+      <h3
+        onClick={handleAccordion}
+        className={`categoryTitle ${
+          name === taskType.TODO
+            ? "bg-[var(--todo-bg-color)]"
+            : name === taskType.IN_PROGRESS
+            ? "bg-[var(--inprogress-bg-color)]"
+            : "bg-[var(--completed-bg-color)]"
+        } rounded-t-xl p-3 font-semibold text-base flex justify-between items-center`}
+      >
+        {title} ({tasks.length})
+        <FaChevronDown
+          className={`duration-500 ${openAccordion ? "-rotate-180" : ""}`}
+        />
+      </h3>
+      {openAccordion && (
         <div
-          className="taskCategory"
-          key={categoryKey}
+          className={`taskList bg-[#f1f1f1] rounded-b-xl transition-all duration-1000 ${
+            !openAccordion ? "max-h-0" : "max-h-full"
+          }`}
         >
-          <h3
-            onClick={handleAccordion}
-            className={`categoryTitle ${
-              name === taskType.TODO
-                ? "bg-[var(--todo-bg-color)]"
-                : name === taskType.IN_PROGRESS
-                ? "bg-[var(--inprogress-bg-color)]"
-                : "bg-[var(--completed-bg-color)]"
-            } rounded-t-xl p-3 font-semibold text-base flex justify-between items-center`}
-          >
-            {title} ({tasks.length})
-            <FaChevronDown
-              className={`duration-500 ${openAccordion ? "-rotate-180" : ""}`}
-            />
-          </h3>
-          {openAccordion && (
+          {/* add task section */}
+          {name === taskType.TODO ? (
             <div
-              className={`taskList bg-[#f1f1f1] rounded-b-xl transition-all duration-1000 ${
-                !openAccordion ? "max-h-0" : "max-h-full"
-              }`}
+              className="addTask ml-10 flex items-center gap-2 p-2 cursor-pointer"
+              onClick={openAddTaskModalInline}
             >
-              {/* add task section */}
-              {name === taskType.TODO ? (
-                <div
-                  className="addTask ml-10 flex items-center gap-2 p-2 cursor-pointer"
-                  onClick={openAddTaskModalInline}
-                >
-                  <HiPlus className="text-[var(--color-primary)]" />{" "}
-                  <span className="uppercase font-bold">add task</span>
+              <HiPlus className="text-[var(--color-primary)]" />{" "}
+              <span className="uppercase font-bold">add task</span>
+            </div>
+          ) : null}
+          {/* inline modal */}
+          {inlineModal && (
+            <div className="inlineModal flex gap-3 p-2">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Enter task name"
+                  className="bg-transparent border-none outline-none p-2 border border-[var(--border-color)] rounded-md"
+                  onChange={(e) => {
+                    setTaskData &&
+                      setTaskData({
+                        ...taskData,
+                        title: e.target.value || "",
+                      });
+                  }}
+                />
+                <div className="flex items-center gap-2 mt-3">
+                  <Button
+                    content={
+                      <>
+                        Add <IoReturnDownBack />
+                      </>
+                    }
+                    onClick={() => {
+                      dispatch(
+                        addTask({
+                          task: { ...taskData, description: "TaskBuddy" },
+                        })
+                      );
+                      setTaskData({
+                        id: Date.now(),
+                        title: "",
+                        description: "",
+                        category: {
+                          id: 1,
+                          name: "work",
+                          title: "Work",
+                        },
+                        dueOn: null,
+                        status: {
+                          id: 1,
+                          name: "",
+                          title: "",
+                          tasks: [],
+                        },
+                        attachment: [],
+                      });
+                      setInlineModal(false);
+                    }}
+                    className="px-3 py-[6px]"
+                  />
+                  <Button
+                    content="Cancel"
+                    onClick={() => setInlineModal(false)}
+                    className="px-3 py-[6px] bg-transparent text-black"
+                  />
                 </div>
-              ) : null}
-              {/* inline modal */}
-              {inlineModal && (
-                <div className="inlineModal flex gap-3 p-2">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      placeholder="Enter task name"
-                      className="bg-transparent border-none outline-none p-2 border border-[var(--border-color)] rounded-md"
-                      onChange={(e) => {
-                        setTaskData &&
-                          setTaskData({
-                            ...taskData,
-                            title: e.target.value || "",
-                          });
-                      }}
-                    />
-                    <div className="flex items-center gap-2 mt-3">
-                      <Button
-                        content={
-                          <>
-                            Add <IoReturnDownBack />
-                          </>
-                        }
-                        onClick={() => {
-                          dispatch(
-                            addTask({
-                              task: { ...taskData, description: "TaskBuddy" },
-                            })
-                          );
-                          setTaskData({
-                            id: Date.now(),
-                            title: "",
-                            description: "",
-                            category: {
-                              id: 1,
-                              name: "work",
-                              title: "Work",
-                            },
-                            dueOn: null,
-                            status: {
-                              id: 1,
-                              name: "",
-                              title: "",
-                              tasks: [],
-                            },
-                            attachment: [],
-                          });
-                          setInlineModal(false);
-                        }}
-                        className="px-3 py-[6px]"
-                      />
-                      <Button
-                        content="Cancel"
-                        onClick={() => setInlineModal(false)}
-                        className="px-3 py-[6px] bg-transparent text-black"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex-1 relative">
-                    {/* Dropdown Button */}
-                    <Dropdown
-                      onClick={handleDropdownClick}
-                      label={
-                        taskData.dueOn ? (
-                          taskData.dueOn
-                        ) : (
-                          <div className="flex gap-2 items-center">
-                            <MdDateRange className="text-xl text-[rgba(0,0,0,0.6)]" />{" "}
-                            <span className="font-semibold text-[rgba(0,0,0,0.6)]">
-                              Add Date
-                            </span>
-                          </div>
-                        )
-                      }
-                      onChange={() => {}}
-                      className="px-2 py-2 flex items-center"
-                    />
+              </div>
+              <div className="flex-1 relative">
+                {/* Dropdown Button */}
+                <Dropdown
+                  onClick={handleDropdownClick}
+                  label={
+                    taskData.dueOn ? (
+                      taskData.dueOn
+                    ) : (
+                      <div className="flex gap-2 items-center">
+                        <MdDateRange className="text-xl text-[rgba(0,0,0,0.6)]" />{" "}
+                        <span className="font-semibold text-[rgba(0,0,0,0.6)]">
+                          Add Date
+                        </span>
+                      </div>
+                    )
+                  }
+                  onChange={() => {}}
+                  className="px-2 py-2 flex items-center"
+                />
 
-                    {/* Date Picker */}
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <DatePicker
-                        label="Due Date"
-                        open={open}
-                        onOpen={() => setOpen(true)}
-                        onClose={() => setOpen(false)}
-                        onChange={(date: Dayjs | null) =>
-                          setTaskData({
-                            ...taskData,
-                            dueOn: format(
-                              date?.toDate() ?? new Date(),
-                              "dd MMM, yyyy"
-                            ),
-                          })
-                        }
-                        slotProps={{
-                          textField: {
-                            sx: {
-                              zIndex: -1,
-                              position: "absolute",
-                              top: "-10px",
-                            },
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </div>
-                  <div className="flex-1">
-                    <Dropdown
-                      label={<IoAddOutline />}
-                      items={optionsStatus}
-                      onChange={(data: string) =>
-                        setTaskData({
-                          ...taskData,
-                          status: {
-                            id: 1,
-                            name: data,
-                            title: data,
-                            tasks: [],
-                          },
-                        })
-                      }
-                      className={"px-2 py-2"}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <Dropdown
-                      label={<IoAddOutline />}
-                      items={optionsCategory}
-                      onChange={(data: string) =>
-                        setTaskData({
-                          ...taskData,
-                          category: {
-                            id: 1,
-                            name: data,
-                            title: data,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="flex-[0.15]"></div>
-                </div>
-              )}
-              {/* list of all tasks */}
-              {tasks.length > 0 ? (
-                tasks.map((task, index) => (
-                      <SingleTask
-                        task={task}
-                        index={index}
-                        setTaskData={setTaskData}
-                        taskData={taskData}
-                        name={name}
-                      />
-                ))
-              ) : (
-                <p className="text-gray-400 text-center flex h-60 items-center justify-center">
-                  No Tasks in {title}
-                </p>
-              )}
+                {/* Date Picker */}
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    label="Due Date"
+                    open={open}
+                    onOpen={() => setOpen(true)}
+                    onClose={() => setOpen(false)}
+                    onChange={(date: Dayjs | null) =>
+                      setTaskData({
+                        ...taskData,
+                        dueOn: format(
+                          date?.toDate() ?? new Date(),
+                          "dd MMM, yyyy"
+                        ),
+                      })
+                    }
+                    slotProps={{
+                      textField: {
+                        sx: {
+                          zIndex: -1,
+                          position: "absolute",
+                          top: "-10px",
+                        },
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
+              </div>
+              <div className="flex-1">
+                <Dropdown
+                  label={<IoAddOutline />}
+                  items={optionsStatus}
+                  onChange={(data: string) =>
+                    setTaskData({
+                      ...taskData,
+                      status: {
+                        id: 1,
+                        name: data,
+                        title: data,
+                        tasks: [],
+                      },
+                    })
+                  }
+                  className={"px-2 py-2"}
+                />
+              </div>
+              <div className="flex-1">
+                <Dropdown
+                  label={<IoAddOutline />}
+                  items={optionsCategory}
+                  onChange={(data: string) =>
+                    setTaskData({
+                      ...taskData,
+                      category: {
+                        id: 1,
+                        name: data,
+                        title: data,
+                      },
+                    })
+                  }
+                />
+              </div>
+              <div className="flex-[0.15]"></div>
             </div>
           )}
+          {/* list of all tasks */}
+          {tasks.length > 0 ? (
+            tasks.map((task, index) => (
+              <SingleTask
+                task={task}
+                index={index}
+                setTaskData={setTaskData}
+                taskData={taskData}
+                name={name}
+              />
+            ))
+          ) : (
+            <p className="text-gray-400 text-center flex h-60 items-center justify-center">
+              No Tasks in {title}
+            </p>
+          )}
         </div>
+      )}
+    </div>
   );
 }
 
@@ -716,9 +731,15 @@ export function TasksContainer({
   taskData: any;
   setTaskData: (data: any) => void;
 }) {
-  const { tasks, filteredTasks, isFiltering } = useSelector(
-    (state: RootState) => state.Task
-  );
+  const {
+    tasks,
+    ascSort,
+    descSort,
+    isAscSort,
+    isDescSort,
+    filteredTasks,
+    isFiltering,
+  } = useSelector((state: RootState) => state.Task);
   console.log("Filtered task", filteredTasks);
   const { isList, isBoard } = useSelector(
     (state: RootState) => state.ListBoardView
@@ -730,19 +751,47 @@ export function TasksContainer({
       <TopSecondRow />
       <TopThirdRow />
       {isList && <TableHeadings />}
-        {isList &&
-          !isFiltering &&
-          tasks.map((data, index) => (
-            <TaskCategories
-              taskData={taskData}
-              setTaskData={setTaskData}
-              key={index}
-              categoryKey={index}
-              title={data.title}
-              name={data.name}
-              tasks={data.tasks}
-            />
-          ))}
+      {isList &&
+        !isFiltering &&
+        !isAscSort &&
+        !isDescSort &&
+        tasks.map((data, index) => (
+          <TaskCategories
+            taskData={taskData}
+            setTaskData={setTaskData}
+            key={index}
+            categoryKey={index}
+            title={data.title}
+            name={data.name}
+            tasks={data.tasks}
+          />
+        ))}
+      {isList &&
+        isAscSort &&
+        ascSort.map((data, index) => (
+          <TaskCategories
+            taskData={taskData}
+            setTaskData={setTaskData}
+            key={index}
+            categoryKey={index}
+            title={data.title}
+            name={data.name}
+            tasks={data.tasks}
+          />
+        ))}
+      {isList &&
+        isDescSort &&
+        descSort.map((data, index) => (
+          <TaskCategories
+            taskData={taskData}
+            setTaskData={setTaskData}
+            key={index}
+            categoryKey={index}
+            title={data.title}
+            name={data.name}
+            tasks={data.tasks}
+          />
+        ))}
       {isList &&
         isFiltering &&
         filteredTasks.map((data, index) => (
