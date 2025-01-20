@@ -164,7 +164,7 @@ function App() {
       attachment: [] as File[],
     });
   };
-
+  console.clear();
   return (
     <div className="pt-14 px-8">
       <TasksContainer taskData={taskData} setTaskData={setTaskData} />
